@@ -1,0 +1,30 @@
+name: iOS Build
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Setup Theos
+        run: |
+          sudo git clone --recursive https://github.com/theos/theos.git /opt/theos
+          curl -LO https://github.com/theos/sdks/archive/master.zip
+          unzip master.zip
+          mv sdks-master/* /opt/theos/sdks
+          echo "THEOS=/opt/theos" >> $GITHUB_ENV
+
+      - name: Build Dylib
+        run: |
+          export THEOS=/opt/theos
+          make package FINALPACKAGE=1
+        
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ModMenu-Dylib
+          path: packages/*.deb
